@@ -24,11 +24,11 @@ public class JobTriggerPoolHelper {
             500,
             60L,
             TimeUnit.SECONDS,
-            new LinkedBlockingQueue<Runnable>(100000),
+            new LinkedBlockingQueue<>(100000),
             new ThreadPoolExecutor.CallerRunsPolicy());
 
 
-    public void addTrigger(final int jobId){
+    public void addTrigger(final int jobId) {
         triggerPool.execute(new Runnable() {
             @Override
             public void run() {
@@ -37,7 +37,7 @@ public class JobTriggerPoolHelper {
         });
     }
 
-    public void stop(){
+    public void stop() {
         //triggerPool.shutdown();
         triggerPool.shutdownNow();
         logger.info(">>>>>>>>> xxl-job trigger thread pool shutdown success.");
@@ -52,7 +52,7 @@ public class JobTriggerPoolHelper {
         helper.addTrigger(jobId);
     }
 
-    public static void toStop(){
+    public static void toStop() {
         helper.stop();
     }
 

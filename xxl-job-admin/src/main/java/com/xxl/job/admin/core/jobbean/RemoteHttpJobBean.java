@@ -18,8 +18,7 @@ public class RemoteHttpJobBean extends QuartzJobBean {
 	private static Logger logger = LoggerFactory.getLogger(RemoteHttpJobBean.class);
 
 	@Override
-	protected void executeInternal(JobExecutionContext context)
-			throws JobExecutionException {
+	protected void executeInternal(JobExecutionContext context) {
 
 		// load jobId
 		JobKey jobKey = context.getTrigger().getJobKey();

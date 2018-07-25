@@ -1,0 +1,7 @@
+edianzu:
+  schedule:
+    cluster-name: mall
+    registry-address: http://127.0.0.1:8080
+    log-path: /Users/wang/logs/xxl-log
+server:
+  port: 9989

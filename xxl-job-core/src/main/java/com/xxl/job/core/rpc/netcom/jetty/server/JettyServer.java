@@ -13,80 +13,83 @@ import org.slf4j.LoggerFactory;
 
 /**
  * rpc jetty server
+ *
  * @author xuxueli 2015-11-19 22:29:03
  */
 public class JettyServer {
-	private static final Logger logger = LoggerFactory.getLogger(JettyServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(JettyServer.class);
 
-	private Server server;
-	private Thread thread;
-	public void start(final int port, final String ip, final String appName) throws Exception {
-		thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
+    private Server server;
+    private Thread thread;
 
-				// The Server
-				server = new Server(new ExecutorThreadPool());  // 非阻塞
+    public void start(final int port, final String ip, final String appName) throws Exception {
+        thread = new Thread(() -> {
 
-				// HTTP connector
-				ServerConnector connector = new ServerConnector(server);
-				if (ip!=null && ip.trim().length()>0) {
-					connector.setHost(ip);	// The network interface this connector binds to as an IP address or a hostname.  If null or 0.0.0.0, then bind to all interfaces.
-				}
-				connector.setPort(port);
-				server.setConnectors(new Connector[]{connector});
+            // The Server
+            // 非阻塞
+            server = new Server(new ExecutorThreadPool());
 
-				// Set a handler
-				HandlerCollection handlerc =new HandlerCollection();
-				handlerc.setHandlers(new Handler[]{new JettyServerHandler()});
-				server.setHandler(handlerc);
+            // HTTP connector
+            ServerConnector connector = new ServerConnector(server);
+            if (ip != null && ip.trim().length() > 0) {
+                // The network interface this connector binds to as an IP address or a hostname.  If null or 0.0.0.0, then bind to all interfaces.
+                connector.setHost(ip);
+            }
+            connector.setPort(port);
+            server.setConnectors(new Connector[]{connector});
 
-				try {
-					// Start server
-					server.start();
-					logger.info(">>>>>>>>>>> xxl-job jetty server start success at port:{}.", port);
+            // Set a handler
+            HandlerCollection handlerc = new HandlerCollection();
+            handlerc.setHandlers(new Handler[]{new JettyServerHandler()});
+            server.setHandler(handlerc);
 
-					// Start Registry-Server
-					ExecutorRegistryThread.getInstance().start(port, ip, appName);
+            try {
+                // Start server
+                server.start();
+                logger.info(">>>>>>>>>>> xxl-job jetty server start success at port:{}.", port);
 
-					// Start Callback-Server
-					TriggerCallbackThread.getInstance().start();
+                // Start Registry-Server
+                ExecutorRegistryThread.getInstance().start(port, ip, appName);
 
-					server.join();	// block until thread stopped
-					logger.info(">>>>>>>>>>> xxl-rpc server join success, netcon={}, port={}", JettyServer.class.getName(), port);
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				} finally {
-					//destroy();
-				}
-			}
-		});
-		thread.setDaemon(true);	// daemon, service jvm, user thread leave >>> daemon leave >>> jvm leave
-		thread.start();
-	}
+                // Start Callback-Server
+                TriggerCallbackThread.getInstance().start();
 
-	public void destroy() {
+                server.join();    // block until thread stopped
+                logger.info(">>>>>>>>>>> xxl-rpc server join success, netcon={}, port={}", JettyServer.class.getName(), port);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                //destroy();
+            }
+        });
 
-		// destroy Registry-Server
-		ExecutorRegistryThread.getInstance().toStop();
+        // daemon, service jvm, user thread leave >>> daemon leave >>> jvm leave
+        thread.setDaemon(true);
+        thread.start();
+    }
 
-		// destroy Callback-Server
-		TriggerCallbackThread.getInstance().toStop();
+    public void destroy() {
 
-		// destroy server
-		if (server != null) {
-			try {
-				server.stop();
-				server.destroy();
-			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
-			}
-		}
-		if (thread.isAlive()) {
-			thread.interrupt();
-		}
+        // destroy Registry-Server
+        ExecutorRegistryThread.getInstance().toStop();
 
-		logger.info(">>>>>>>>>>> xxl-rpc server destroy success, netcon={}", JettyServer.class.getName());
-	}
+        // destroy Callback-Server
+        TriggerCallbackThread.getInstance().toStop();
+
+        // destroy server
+        if (server != null) {
+            try {
+                server.stop();
+                server.destroy();
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+        if (thread.isAlive()) {
+            thread.interrupt();
+        }
+
+        logger.info(">>>>>>>>>>> xxl-rpc server destroy success, netcon={}", JettyServer.class.getName());
+    }
 
 }
